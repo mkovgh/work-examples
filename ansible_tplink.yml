@@ -1,0 +1,45 @@
+# Compatibility with all firmware is not guaranteed
+
+# Select hosts, hostname, port_numbers, port_range_uplink, vlans_list optional: roles and other vars
+- hosts: <hosts name>
+  roles:
+  connection: network_cli
+  vars:
+  - hostname: <hostname>
+  - port_numbers: 24
+  - portmode: port-based
+  - port_range_uplink: <main upLink>
+  - vlans_list: <vlans>
+  - ntp_server: <select ip or name server>
+  - syslog_server: <select ip or name server>
+  tasks:
+
+  - name: Set HostName 
+    ios_command:
+     commands:
+     - enable
+     - configure
+     - hostname "{{hostname}}"
+
+  - name: Set loopback-detection, ntp-server, rsyslog-server, snmp-server
+    ios_command:
+     commands:
+     - enable
+     - configure
+     - loopback-detection
+     - loopback-detection interval 5
+     - loopback-detection recovery-time 60
+     - interface range gigabitEthernet 1/0/1-{{port_numbers}}
+     - loopback-detection
+     - loopback-detection config process-mode {{portmode}} recovery-mode auto
+     - system-time ntp UTC+03:00 {{ntp_server}} {{ntp_server}} 24
+     - logging host index 1 {{syslog_server}} 6
+     - snmp-server
+     - snmp-server community public read-only viewDefault
+
+  - name: Set VLANS on UpLink's
+    ios_command:
+     commands:
+     - enable
+     - configure
+     - interface range gigabitEthernet 1/0/{{port_range_uplink}}
